@@ -32,12 +32,7 @@ for i = 2 : iterasi
         end
     end
     fitness(:, i) = fitnessBest;
-    costBest = min(costBefore, costIter);
     costBefore = costIter;
+    costBest = min(costBefore, costIter);
     perjalananCostBest(:, i) = costBest;
-    selisih = std(pIter)
-    selisihNilaiP = mean(selisih)
-    if selisihNilaiP < 1
-        break;
-    end
 end
