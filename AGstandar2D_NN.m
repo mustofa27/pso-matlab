@@ -1,0 +1,171 @@
+%===============================================================================
+% PROGRAM OPTIMAL POWER FLOW MENGGUNAKAN ALGORITMA GENETIKA
+% IEEE 30 BUS SYSTEM
+% 
+% Kukuh Widarsono
+%===============================================================================
+
+clc                           
+clear all                     
+
+Nvar        = 6;              % Jumlah variabel pada fungsi yang dioptimasi
+Nbit        = 1;              % Jumlah bit yang mengkodekan satu variabel
+JumGen      = Nbit*Nvar;      % Jumlah gen dalam kromosom
+
+UkPop       = 100;           % Jumlah kromosom dalam populasi
+Psilang     = 0.8;            % Probabilitas pindah silang
+Pmutasi     = 0.3;            % Probabilitas mutasi
+MaxG        = 25;            % Jumlah generasi
+
+
+% Inisialisasi Grafis 2D Untuk Fitness
+hfig = figure;
+hold on
+title('Plot Nilai Fitness')
+set(hfig, 'position', [50,50,600,400]);
+set(hfig, 'DoubleBuffer', 'on');
+hbestplot = plot(1:MaxG,zeros(1,MaxG));
+xlabel('Generasi');
+ylabel('Fitness');
+hold off
+drawnow;
+
+% % Inisialisasi Grafis 2D Untuk Fungsi Generating Cost
+% hfig2 = figure;
+% hold on
+% title('Generating Cost')
+% set(hfig2, 'position', [100,100,650,450]);
+% set(hfig2, 'DoubleBuffer', 'on');
+% hcostplot = plot(1:MaxG,zeros(1,MaxG));
+% xlabel('Generasi');
+% ylabel('Cost');
+% hold off
+% drawnow;
+% 
+% % Inisialisasi Grafis 2D Untuk Fungsi Losses
+% hfig3 = figure;
+% hold on
+% title('Losses')
+% set(hfig3, 'position', [150,150,700,500]);
+% set(hfig3, 'DoubleBuffer', 'on');
+% hlossplot = plot(1:MaxG,zeros(1,MaxG));
+% xlabel('Generasi');
+% ylabel('Losses');
+% hold off
+% drawnow;
+
+% Inisialisasi Populasi
+Populasi = InisialisasiPopulasi(UkPop,JumGen);
+
+% Loop Evolusi
+for generasi=1:MaxG,
+  if (generasi == 15)
+     %Fitness
+     if (max(Fitness) >= 1.2)
+           Populasi = TempPopulasi;
+     else                                                    %% PROGRAM UNTUK NEURAL NETWORK %%
+            %[data67,koor]=max(LinearFitness);
+            %target_nn=Populasi(koor,:)
+            NN ;
+            %Populasi (26:100,:)= A (1:75,:);
+            Populasi = A;
+            %x = DekodekanKromosom(Populasi(1,:));
+            Fitness(1) = Fitness(1);
+            %EvaluasiIndividu(x);
+            MaxF = Fitness(1);
+            MinF = Fitness(1);
+     end
+    
+  else
+    % Populasi;  
+    x = DekodekanKromosom(Populasi(1,:));
+    Fitness(1) = EvaluasiIndividu(x);    
+    MaxF = Fitness(1);
+    MinF = Fitness(1);
+    
+  end    
+    
+   IndeksIndividuTerbaik = 1;
+   for ii=2:UkPop,
+     Kromosom = Populasi(ii,:);
+     x = DekodekanKromosom(Kromosom);
+     Fitness(ii) = EvaluasiIndividu(x);
+     if (Fitness(ii) > MaxF),
+        MaxF = Fitness(ii);
+        IndeksIndividuTerbaik = ii;
+        BestX = x;
+     end
+     if (Fitness(ii) < MinF),
+        MinF = Fitness(ii);
+     end
+   end
+   
+   % Plotting Fitness
+   plotvector = get(hbestplot,'YData');
+   plotvector(generasi) = MaxF;
+   set(hbestplot,'YData',plotvector);
+   drawnow
+%    
+%    % Plotting Generating Cost
+%    load datatotalcost;
+%    plotvector2 = get(hcostplot,'YData');
+%    plotvector2(generasi) = totalcost;
+%    set(hcostplot,'YData',plotvector2);
+%    drawnow
+%    
+%    % Plotting Losses
+%    %load datatotalcost;
+%    plotvector3 = get(hlossplot,'YData');
+%    plotvector3(generasi) = real(SLT);
+%    set(hlossplot,'YData',plotvector3);
+%    drawnow
+
+   TempPopulasi = Populasi;
+
+   % Elitisme:
+   % - Buat satu kopi kromosom terbaik jika ukuran populasi ganjil
+   % - Buat dua kopi kromosom terbaik jika ukuran populasi genap
+   if mod(UkPop,2)==0,           % ukuran populasi genap
+      IterasiMulai = 3;
+      TempPopulasi(1,:) = Populasi(IndeksIndividuTerbaik,:);
+      TempPopulasi(2,:) = Populasi(IndeksIndividuTerbaik,:);
+   else                          % ukuran populasi ganjil
+      IterasiMulai = 2;
+      TempPopulasi(1,:) = Populasi(IndeksIndividuTerbaik,:);
+   end
+       
+   LinearFitness = LinearFitnessRanking(UkPop,Fitness,MaxF,MinF);
+
+   % Roulette-wheel selection dan pindah silang
+   for jj=IterasiMulai:2:UkPop,
+       IP1 = RouletteWheel(UkPop,LinearFitness);
+       IP2 = RouletteWheel(UkPop,LinearFitness);
+       if (rand < Psilang),
+          Anak = PindahSilang(Populasi(IP1,:),Populasi(IP2,:),JumGen);
+          TempPopulasi(jj,:) = Anak(1,:);
+          TempPopulasi(jj+1,:) = Anak(2,:);
+        else
+          TempPopulasi(jj,:) = Populasi(IP1,:);
+          TempPopulasi(jj+1,:) = Populasi(IP2,:);
+        end    
+   end
+
+   % Mutasi dilakukan pada semua kromosom
+   for kk=IterasiMulai:UkPop,
+      TempPopulasi(kk,:) = Mutasi(TempPopulasi(kk,:),JumGen,Pmutasi);
+   end   
+
+   % Generational Replacement: mengganti semua kromosom sekaligus
+   Populasi = TempPopulasi;
+   
+   [data67,koor]=max(LinearFitness);
+   target_nn=Populasi(koor,:);
+   data_target=target_nn;
+   max (Fitness);
+end
+  data_target=target_nn
+  max (Fitness)
+
+%% Menampilkan Hasil Akhir Program
+HasilAkhir
+
