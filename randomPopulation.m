@@ -1,7 +1,7 @@
 function [populasi, fitness, cost] = randomPopulation(jumlahPopulasi, jumlahGenerator, jumlahIterasi)
-    populasi = zeros(jumlahPopulasi, jumlahGenerator, jumlahIterasi);
-    cost = zeros(jumlahPopulasi, jumlahIterasi);
-    fitness = zeros(jumlahPopulasi, jumlahIterasi);
+    populasi = zeros(jumlahPopulasi, jumlahGenerator, 1);
+    cost = zeros(jumlahPopulasi, 1);
+    fitness = zeros(jumlahPopulasi, 1);
     iter = 0;
     varPengali = [80 80 40 50 30 55];
     while iter ~= jumlahPopulasi
